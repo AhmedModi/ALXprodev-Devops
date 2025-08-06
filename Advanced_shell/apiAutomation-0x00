@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# File paths
+DATA_FILE="data.json"
+ERROR_FILE="errors.txt"
+
+# API URL for Pikachu
+URL="https://pokeapi.co/api/v2/pokemon/pikachu"
+
+# Make the API request
+curl -s -o "$DATA_FILE" "$URL"
+
+# Check if the request succeeded
+if [ $? -ne 0 ] || [ ! -s "$DATA_FILE" ]; then
+    echo "Error: Failed to fetch data for Pikachu from Pokémon API" >> "$ERROR_FILE"
+    rm -f "$DATA_FILE"  # remove empty data file if failed
+fi
