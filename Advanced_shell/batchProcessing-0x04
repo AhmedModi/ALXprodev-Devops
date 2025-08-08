@@ -1,32 +1,21 @@
 #!/bin/bash
 
-# Create output directory if not exists
-mkdir -p pokemon_parallel
-error_log="pokemon_parallel/error.log"
-> "$error_log"
-
-# Function to fetch a single Pokémon's data
 fetch_pokemon() {
-    local name="$1"
-    response=$(curl -s --fail "https://pokeapi.co/api/v2/pokemon/$name")
-    
-    if [ $? -eq 0 ]; then
-        echo "$response" > "pokemon_parallel/${name}.json"
-    else
-        echo "Failed to fetch data for $name" >> "$error_log"
-    fi
+    name=$1
+    curl -s https://pokeapi.co/api/v2/pokemon/$name -o "$name.json" &
+    pid=$!
+
+    # Timeout after 5 seconds
+    ( sleep 5 && kill -9 "$pid" >/dev/null 2>&1 ) &
+    watchdog=$!
+
+    wait "$pid" 2>/dev/null
+    kill "$watchdog" 2>/dev/null
 }
 
-# List of Pokémon to fetch
-pokemon_list=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
-
-# Launch parallel fetches
-for name in "${pokemon_list[@]}"; do
-    fetch_pokemon "$name" &
+for pokemon in Bulbasaur Ivysaur Venusaur Charmander Charmeleon; do
+    fetch_pokemon "$pokemon" &
 done
 
-# Wait for all background jobs to finish
 wait
-
-echo "Parallel data fetching completed."
-echo "Check $error_log for any errors."
+echo "All fetch processes completed."
